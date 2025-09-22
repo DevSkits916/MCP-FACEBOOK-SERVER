@@ -1,11 +1,4 @@
-# MCP-FACEBOOK-SERVER
-Short version: you can’t run an MCP “server” on GitHub Pages because Pages is static hosting. No server process, no SSE endpoint, no joy. Put the MCP server somewhere that can actually execute code (Cloudflare Workers, Fly, Railway, Vercel, whatever), then use GitHub Pages for the static docs/demo. ChatGPT’s Developer Mode will happily connect to a remote MCP server over HTTP+SSE.  ￼
 
-Here’s a drop-in prompt you can paste into Codex to make the whole thing:
-
-⸻
-
-Prompt for Codex
 
 Build a minimal, production-ready Model Context Protocol (MCP) server that ChatGPT can connect to in Developer Mode via HTTP + SSE, and ship the project with:
 	1.	Cloudflare Workers deployment for the MCP server (remote, stateless, scalable)
