@@ -4,6 +4,7 @@ import type {
   AccountsResponse,
   CreatePostResponse,
   DebugTokenResponse,
+  FeedResponse,
   GraphErrorResponse,
   MeResponse,
   PhotoUploadResponse,
@@ -170,6 +171,41 @@ export async function fetchManagedPages({
   return response.data ?? [];
 }
 
+export async function fetchProfileTimeline({
+  env,
+  accessToken,
+  logger,
+  limit = 10,
+  after,
+  before,
+}: {
+  env: Env;
+  accessToken: string;
+  logger: RequestLogger;
+  limit?: number;
+  after?: string;
+  before?: string;
+}): Promise<FeedResponse> {
+  const searchParams: Record<string, string> = {
+    fields:
+      'id,message,story,status_type,created_time,permalink_url,attachments{description,title,type,url,unshimmed_url,media,target}',
+    limit: String(limit),
+  };
+  if (after) {
+    searchParams.after = after;
+  }
+  if (before) {
+    searchParams.before = before;
+  }
+  return callGraph<FeedResponse>({
+    env,
+    logger,
+    path: '/me/feed',
+    accessToken,
+    searchParams,
+  });
+}
+
 export async function postToPageFeed({
   env,
   pageId,
@@ -204,6 +240,38 @@ export async function postToPageFeed({
   });
 }
 
+export async function postToProfileFeed({
+  env,
+  accessToken,
+  logger,
+  message,
+  link,
+  attachedMedia,
+}: {
+  env: Env;
+  accessToken: string;
+  logger: RequestLogger;
+  message: string;
+  link?: string;
+  attachedMedia?: string;
+}): Promise<CreatePostResponse> {
+  const body: Record<string, string> = { message };
+  if (link) {
+    body.link = link;
+  }
+  if (attachedMedia) {
+    body.attached_media = attachedMedia;
+  }
+  return callGraph<CreatePostResponse>({
+    env,
+    logger,
+    path: `/me/feed`,
+    accessToken,
+    method: 'POST',
+    body,
+  });
+}
+
 export async function uploadPagePhoto({
   env,
   pageId,
@@ -225,6 +293,31 @@ export async function uploadPagePhoto({
     env,
     logger,
     path: `/${pageId}/photos`,
+    accessToken,
+    method: 'POST',
+    body,
+  });
+}
+
+export async function uploadProfilePhoto({
+  env,
+  accessToken,
+  logger,
+  imageUrl,
+}: {
+  env: Env;
+  accessToken: string;
+  logger: RequestLogger;
+  imageUrl: string;
+}): Promise<PhotoUploadResponse> {
+  const body: Record<string, string> = {
+    url: imageUrl,
+    published: 'false',
+  };
+  return callGraph<PhotoUploadResponse>({
+    env,
+    logger,
+    path: `/me/photos`,
     accessToken,
     method: 'POST',
     body,

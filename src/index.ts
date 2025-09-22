@@ -266,7 +266,11 @@ export default {
       }
 
       if (path === '/api/tools' && request.method === 'GET') {
-        return jsonResponse({ tools: ['fb.me', 'fb.page_list', 'fb.page_post', 'fb.debug_token', 'echo'] }, {}, corsOrigin);
+        return jsonResponse(
+          { tools: ['fb.me', 'fb.profile_timeline', 'fb.profile_post', 'fb.page_list', 'fb.page_post', 'fb.debug_token', 'echo'] },
+          {},
+          corsOrigin
+        );
       }
 
       if (path === '/oauth/start' && request.method === 'GET') {
