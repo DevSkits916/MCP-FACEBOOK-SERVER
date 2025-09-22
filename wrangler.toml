@@ -1,0 +1,22 @@
+name = "mcp-fb-connector"
+main = "src/index.ts"
+compatibility_date = "2024-05-12"
+
+[vars]
+SERVER_NAME = "mcp-fb-connector"
+REGION = "auto"
+COMMIT = "dev"
+ALLOWED_ORIGINS = ""
+REQUIRE_ADMIN = "0"
+FACEBOOK_APP_ID = ""
+FACEBOOK_APP_SECRET = ""
+OAUTH_REDIRECT = ""
+
+[[kv_namespaces]]
+binding = "TOKENS_KV"
+id = "00000000000000000000000000000000" # replace with real id via `wrangler kv:namespace create`
+
+[[rules]]
+globs = ["ui/*.css", "ui/*.js", "**/ui/*.css", "**/ui/*.js"]
+type = "Text"
+fallthrough = true
