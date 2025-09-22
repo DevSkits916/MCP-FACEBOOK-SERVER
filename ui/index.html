@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MCP Facebook Connector</title>
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>MCP Facebook Connector</h1>
+        <p class="subtitle">Facebook Graph API tools exposed through the Model Context Protocol</p>
+      </div>
+      <div class="admin-token">
+        <label for="adminTokenInput">Admin token</label>
+        <div class="token-input">
+          <input id="adminTokenInput" type="password" autocomplete="off" placeholder="optional" />
+          <button id="applyAdminToken" type="button">Apply</button>
+          <button id="clearAdminToken" type="button" title="Forget saved token">Clear</button>
+        </div>
+        <small id="adminTokenStatus" class="muted">Not required unless configured.</small>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <nav class="side-nav" aria-label="Sections">
+        <button class="nav-btn active" data-target="connection">Connection</button>
+        <button class="nav-btn" data-target="auth">Facebook Auth</button>
+        <button class="nav-btn" data-target="pages">Pages</button>
+        <button class="nav-btn" data-target="settings">Settings</button>
+        <button class="nav-btn" data-target="console">Console</button>
+      </nav>
+
+      <main class="content" id="content">
+        <section id="panel-connection" class="panel active" aria-labelledby="connection">
+          <h2>Connection</h2>
+          <p>Monitor the worker endpoints and MCP status.</p>
+          <div class="status-grid">
+            <div>
+              <span class="label">Worker URL</span>
+              <span id="workerUrl" class="value"></span>
+            </div>
+            <div>
+              <span class="label">Health</span>
+              <span id="healthStatus" class="value status unknown">Checking…</span>
+            </div>
+            <div>
+              <span class="label">MCP endpoint</span>
+              <span id="mcpStatus" class="value status unknown">Checking…</span>
+            </div>
+            <div>
+              <span class="label">SSE stream</span>
+              <span id="sseStatus" class="value status unknown">Checking…</span>
+            </div>
+          </div>
+          <button id="refreshConnection" type="button">Refresh status</button>
+        </section>
+
+        <section id="panel-auth" class="panel" aria-labelledby="auth">
+          <h2>Facebook Authorization</h2>
+          <p>Connect your Facebook account to issue page requests.</p>
+          <div class="auth-info">
+            <p><strong>User:</strong> <span id="authUser">Not linked</span></p>
+            <p><strong>Token expiry:</strong> <span id="authExpiry">—</span></p>
+            <p class="muted">Required scopes: <code>public_profile</code>, <code>pages_show_list</code>, <code>pages_read_engagement</code>, <code>pages_manage_posts</code>. Page posting requires App Review.</p>
+          </div>
+          <div class="auth-actions">
+            <button id="startOAuth" type="button">Connect with Facebook</button>
+            <button id="revokeAuth" type="button" class="secondary">Revoke token</button>
+          </div>
+          <div id="authMessage" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="panel-pages" class="panel" aria-labelledby="pages">
+          <h2>Pages</h2>
+          <p>Review managed Pages and publish updates.</p>
+          <div class="pages-layout">
+            <div class="page-list">
+              <h3>Managed Pages</h3>
+              <ul id="pagesList" class="list"></ul>
+              <button id="reloadPages" type="button">Reload Pages</button>
+            </div>
+            <div class="page-post">
+              <h3>Quick Post</h3>
+              <form id="pagePostForm">
+                <label>Page
+                  <select id="pageSelect" required>
+                    <option value="" disabled selected>Select a page</option>
+                  </select>
+                </label>
+                <label>Message
+                  <textarea id="postMessage" rows="4" maxlength="2000" required placeholder="Share an update"></textarea>
+                </label>
+                <label>Link (optional)
+                  <input id="postLink" type="url" placeholder="https://example.com" />
+                </label>
+                <label>Image URL (optional)
+                  <input id="postImage" type="url" placeholder="https://example.com/image.jpg" />
+                </label>
+                <button type="submit">Publish</button>
+              </form>
+              <div id="postResult" class="muted" aria-live="polite"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="panel-settings" class="panel" aria-labelledby="settings">
+          <h2>Settings</h2>
+          <form id="settingsForm">
+            <label>Allowed origins (one per line)
+              <textarea id="settingsOrigins" rows="4" placeholder="https://chat.openai.com"></textarea>
+            </label>
+            <label>Rate limit (requests per minute)
+              <input id="settingsRate" type="number" min="1" max="1000" />
+            </label>
+            <fieldset>
+              <legend>Feature toggles</legend>
+              <label class="checkbox">
+                <input type="checkbox" id="flagVerboseLogging" /> Verbose logging
+              </label>
+            </fieldset>
+            <button type="submit">Save settings</button>
+            <span id="settingsStatus" class="muted" aria-live="polite"></span>
+          </form>
+        </section>
+
+        <section id="panel-console" class="panel" aria-labelledby="console">
+          <h2>Console</h2>
+          <div class="console-controls">
+            <label>Level
+              <select id="logLevelFilter">
+                <option value="all">All</option>
+                <option value="debug">Debug</option>
+                <option value="info">Info</option>
+                <option value="warn">Warn</option>
+                <option value="error">Error</option>
+              </select>
+            </label>
+            <label>Tool
+              <input id="logToolFilter" type="text" placeholder="fb.page_post" />
+            </label>
+            <button id="reconnectLogs" type="button">Reconnect</button>
+          </div>
+          <div id="consoleOutput" class="console-output" aria-live="polite"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
