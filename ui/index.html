@@ -27,6 +27,7 @@
       <nav class="side-nav" aria-label="Sections">
         <button class="nav-btn active" data-target="connection">Connection</button>
         <button class="nav-btn" data-target="auth">Facebook Auth</button>
+        <button class="nav-btn" data-target="profile">Profile</button>
         <button class="nav-btn" data-target="pages">Pages</button>
         <button class="nav-btn" data-target="settings">Settings</button>
         <button class="nav-btn" data-target="console">Console</button>
@@ -59,17 +60,49 @@
 
         <section id="panel-auth" class="panel" aria-labelledby="auth">
           <h2>Facebook Authorization</h2>
-          <p>Connect your Facebook account to issue page requests.</p>
+          <p>Connect your Facebook account to issue page and profile requests.</p>
           <div class="auth-info">
             <p><strong>User:</strong> <span id="authUser">Not linked</span></p>
             <p><strong>Token expiry:</strong> <span id="authExpiry">—</span></p>
-            <p class="muted">Required scopes: <code>public_profile</code>, <code>pages_show_list</code>, <code>pages_read_engagement</code>, <code>pages_manage_posts</code>. Page posting requires App Review.</p>
+            <p class="muted">Required scopes: <code>public_profile</code>, <code>pages_show_list</code>, <code>pages_read_engagement</code>, <code>pages_manage_posts</code>, <code>user_posts</code>, <code>user_photos</code>, <code>publish_actions</code>. Profile posting typically requires App Review.</p>
           </div>
           <div class="auth-actions">
             <button id="startOAuth" type="button">Connect with Facebook</button>
             <button id="revokeAuth" type="button" class="secondary">Revoke token</button>
           </div>
           <div id="authMessage" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="panel-profile" class="panel" aria-labelledby="profile">
+          <h2>Profile</h2>
+          <p>Inspect your personal timeline and share updates as the authorized user.</p>
+          <div class="profile-layout">
+            <div class="profile-timeline">
+              <h3>Timeline</h3>
+              <p id="profileTimelineStatus" class="muted" aria-live="polite"></p>
+              <ul id="profileTimeline" class="timeline-list"></ul>
+              <div class="timeline-controls">
+                <button id="profileTimelinePrev" type="button" class="secondary">Newer</button>
+                <button id="profileTimelineNext" type="button" class="secondary">Older</button>
+              </div>
+            </div>
+            <div class="profile-post">
+              <h3>Share to profile</h3>
+              <form id="profilePostForm">
+                <label>Message
+                  <textarea id="profilePostMessage" rows="4" maxlength="2000" required placeholder="Share an update"></textarea>
+                </label>
+                <label>Link (optional)
+                  <input id="profilePostLink" type="url" placeholder="https://example.com" />
+                </label>
+                <label>Image URL (optional)
+                  <input id="profilePostImage" type="url" placeholder="https://example.com/photo.jpg" />
+                </label>
+                <button type="submit">Publish</button>
+              </form>
+              <div id="profilePostResult" class="muted" aria-live="polite"></div>
+            </div>
+          </div>
         </section>
 
         <section id="panel-pages" class="panel" aria-labelledby="pages">

@@ -1,5 +1,7 @@
 const state = {
   adminToken: localStorage.getItem('mcpAdminToken') || '',
+  profileTimeline: [],
+  profilePaging: { before: null, after: null, previous_url: null, next_url: null },
   pages: [],
   logs: [],
   logAbort: null,
@@ -22,6 +24,15 @@ const elements = {
   authMessage: document.getElementById('authMessage'),
   startOAuth: document.getElementById('startOAuth'),
   revokeAuth: document.getElementById('revokeAuth'),
+  profileTimelineStatus: document.getElementById('profileTimelineStatus'),
+  profileTimeline: document.getElementById('profileTimeline'),
+  profileTimelinePrev: document.getElementById('profileTimelinePrev'),
+  profileTimelineNext: document.getElementById('profileTimelineNext'),
+  profilePostForm: document.getElementById('profilePostForm'),
+  profilePostMessage: document.getElementById('profilePostMessage'),
+  profilePostLink: document.getElementById('profilePostLink'),
+  profilePostImage: document.getElementById('profilePostImage'),
+  profilePostResult: document.getElementById('profilePostResult'),
   pagesList: document.getElementById('pagesList'),
   reloadPages: document.getElementById('reloadPages'),
   pageSelect: document.getElementById('pageSelect'),
@@ -174,6 +185,116 @@ function timeUntil(date) {
   return `${days} days`;
 }
 
+async function loadProfileTimeline(direction) {
+  const params = { limit: 10 };
+  if (direction === 'next' && state.profilePaging.after) {
+    params.after = state.profilePaging.after;
+  } else if (direction === 'previous' && state.profilePaging.before) {
+    params.before = state.profilePaging.before;
+  }
+  elements.profileTimelineStatus.textContent = 'Loading…';
+  elements.profileTimelinePrev.disabled = true;
+  elements.profileTimelineNext.disabled = true;
+  try {
+    const result = await callTool('fb.profile_timeline', params);
+    const posts = Array.isArray(result?.posts) ? result.posts : [];
+    state.profileTimeline = posts;
+    const paging = result?.paging || {};
+    state.profilePaging = {
+      before: paging.before ?? null,
+      after: paging.after ?? null,
+      previous_url: paging.previous_url ?? null,
+      next_url: paging.next_url ?? null,
+    };
+    renderProfileTimeline();
+    elements.profileTimelineStatus.textContent = posts.length === 0 ? 'No posts found.' : '';
+  } catch (error) {
+    state.profileTimeline = [];
+    state.profilePaging = { before: null, after: null, previous_url: null, next_url: null };
+    renderProfileTimeline();
+    elements.profileTimelineStatus.textContent = error.message;
+  }
+}
+
+function renderProfileTimeline() {
+  elements.profileTimeline.innerHTML = '';
+  if (!state.profileTimeline.length) {
+    const hasStatus = (elements.profileTimelineStatus.textContent || '').trim().length > 0;
+    if (hasStatus) {
+      return;
+    }
+    const empty = document.createElement('li');
+    empty.className = 'timeline-empty muted';
+    empty.textContent = 'Timeline is empty.';
+    elements.profileTimeline.appendChild(empty);
+  } else {
+    state.profileTimeline.forEach((post) => {
+      const li = document.createElement('li');
+      li.className = 'timeline-item';
+
+      const meta = document.createElement('div');
+      meta.className = 'timeline-meta';
+      const created = document.createElement('span');
+      created.textContent = new Date(post.created_time).toLocaleString();
+      meta.appendChild(created);
+      if (post.status_type) {
+        const type = document.createElement('span');
+        type.textContent = post.status_type;
+        meta.appendChild(type);
+      }
+      li.appendChild(meta);
+
+      const message = document.createElement('p');
+      message.className = 'timeline-message';
+      message.textContent = post.message || post.story || '(no message)';
+      li.appendChild(message);
+
+      const attachments = Array.isArray(post.attachments) ? post.attachments : [];
+      if (attachments.length) {
+        const list = document.createElement('ul');
+        list.className = 'timeline-attachments';
+        attachments.forEach((attachment) => {
+          const item = document.createElement('li');
+          if (attachment.title) {
+            const title = document.createElement('strong');
+            title.textContent = attachment.title;
+            item.appendChild(title);
+          }
+          if (attachment.url) {
+            const link = document.createElement('a');
+            link.href = attachment.url;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.textContent = attachment.url;
+            item.appendChild(link);
+          }
+          if (attachment.description) {
+            const desc = document.createElement('p');
+            desc.textContent = attachment.description;
+            item.appendChild(desc);
+          }
+          list.appendChild(item);
+        });
+        li.appendChild(list);
+      }
+
+      if (post.permalink_url) {
+        const link = document.createElement('a');
+        link.href = post.permalink_url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.className = 'timeline-permalink';
+        link.textContent = 'View on Facebook';
+        li.appendChild(link);
+      }
+
+      elements.profileTimeline.appendChild(li);
+    });
+  }
+  elements.profileTimelinePrev.disabled = !state.profilePaging.before;
+  elements.profileTimelineNext.disabled = !state.profilePaging.after;
+}
+
 async function startOAuth() {
   try {
     const response = await apiFetch('/oauth/start', {
@@ -259,6 +380,33 @@ async function submitPost(event) {
     elements.postImage.value = '';
   } catch (error) {
     elements.postResult.textContent = `Failed: ${error.message}`;
+  }
+}
+
+async function submitProfilePost(event) {
+  event.preventDefault();
+  const message = elements.profilePostMessage.value.trim();
+  const link = elements.profilePostLink.value.trim() || undefined;
+  const image = elements.profilePostImage.value.trim() || undefined;
+  if (!message) {
+    elements.profilePostResult.textContent = 'Message is required.';
+    return;
+  }
+  elements.profilePostResult.textContent = 'Posting…';
+  try {
+    const result = await callTool('fb.profile_post', {
+      message,
+      link,
+      image_url: image,
+    });
+    const url = result.permalink_url ? ` — ${result.permalink_url}` : '';
+    elements.profilePostResult.textContent = `Post created (${result.id})${url}`;
+    elements.profilePostMessage.value = '';
+    elements.profilePostLink.value = '';
+    elements.profilePostImage.value = '';
+    await loadProfileTimeline();
+  } catch (error) {
+    elements.profilePostResult.textContent = `Failed: ${error.message}`;
   }
 }
 
@@ -469,6 +617,7 @@ function initAdminControls() {
 function refreshAll() {
   refreshConnection();
   loadAuthState();
+  loadProfileTimeline();
   loadPages();
   loadSettings();
   connectLogStream();
@@ -478,6 +627,9 @@ function initEvents() {
   elements.refreshConnection.addEventListener('click', refreshConnection);
   elements.startOAuth.addEventListener('click', startOAuth);
   elements.revokeAuth.addEventListener('click', revokeAuth);
+  elements.profileTimelinePrev.addEventListener('click', () => loadProfileTimeline('previous'));
+  elements.profileTimelineNext.addEventListener('click', () => loadProfileTimeline('next'));
+  elements.profilePostForm.addEventListener('submit', submitProfilePost);
   elements.reloadPages.addEventListener('click', loadPages);
   elements.pagePostForm.addEventListener('submit', submitPost);
   elements.settingsForm.addEventListener('submit', saveSettings);

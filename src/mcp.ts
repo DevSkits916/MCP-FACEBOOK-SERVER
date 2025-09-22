@@ -6,6 +6,8 @@ import { fbPageListTool } from './tools/fb.page_list';
 import { fbPagePostTool } from './tools/fb.page_post';
 import { fbDebugTokenTool } from './tools/fb.debug_token';
 import { echoTool } from './tools/echo';
+import { fbProfileTimelineTool } from './tools/fb.profile_timeline';
+import { fbProfilePostTool } from './tools/fb.profile_post';
 
 export interface MCPRequestEnvelope {
   id: string;
@@ -44,6 +46,8 @@ function register(tool: ToolDefinition) {
 
 register(echoTool);
 register(fbMeTool);
+register(fbProfileTimelineTool);
+register(fbProfilePostTool);
 register(fbPageListTool);
 register(fbPagePostTool);
 register(fbDebugTokenTool);

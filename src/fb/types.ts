@@ -48,3 +48,45 @@ export interface PhotoUploadResponse {
   id: string;
   post_id?: string;
 }
+
+export interface FeedAttachment {
+  description?: string;
+  media?: {
+    image?: {
+      src?: string;
+      width?: number;
+      height?: number;
+    };
+  };
+  target?: {
+    id?: string;
+    url?: string;
+  };
+  title?: string;
+  type?: string;
+  url?: string;
+}
+
+export interface FeedItem {
+  id: string;
+  message?: string;
+  story?: string;
+  status_type?: string;
+  created_time: string;
+  permalink_url?: string;
+  attachments?: {
+    data?: FeedAttachment[];
+  };
+}
+
+export interface FeedResponse {
+  data: FeedItem[];
+  paging?: {
+    previous?: string;
+    next?: string;
+    cursors?: {
+      before?: string;
+      after?: string;
+    };
+  };
+}

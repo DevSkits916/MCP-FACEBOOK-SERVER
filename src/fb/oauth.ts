@@ -43,7 +43,8 @@ export function buildOAuthUrl(env: Env, params: OAuthStartParams): string {
   url.searchParams.set('code_challenge_method', 'S256');
   url.searchParams.set(
     'scope',
-    params.scope ?? 'public_profile,pages_show_list,pages_read_engagement,pages_manage_posts'
+    params.scope ??
+      'public_profile,pages_show_list,pages_read_engagement,pages_manage_posts,user_posts,user_photos,publish_actions'
   );
   return url.toString();
 }

@@ -9,7 +9,7 @@ ChatGPT under **Settings → Developer → Add MCP server** to surface the tools
 
 - **MCP endpoints** – `GET /health`, `POST /mcp`, `GET /mcp/sse` (heartbeats every 15 seconds) with structured request logging and
   per-minute rate limiting.
-- **Facebook Graph tools** – `fb.me`, `fb.page_list`, `fb.page_post`, `fb.debug_token`, and `echo` with extensive validation and
+- **Facebook Graph tools** – `fb.me`, `fb.profile_timeline`, `fb.profile_post`, `fb.page_list`, `fb.page_post`, `fb.debug_token`, and `echo` with extensive validation and
   retry logic for transient Graph API errors. Page posting supports optional link and image URL attachments by creating
   unpublished photos and attaching them to the feed post.
 - **OAuth 2.0 + PKCE** – `GET /oauth/start` and `GET /oauth/callback` integrate with Facebook Login, exchange for long-lived tokens,
@@ -102,12 +102,16 @@ which uses `wrangler dev` and supports live reloading.
 3. Review the **Connection** section to ensure `/health`, `/mcp`, and `/mcp/sse` respond successfully.
 4. In **Facebook Authorization**, click **Connect with Facebook**. The UI requests `/oauth/start` (JSON mode) and opens the Facebook
    consent screen in a new window. After completing the flow the callback stores the token in KV and closes the window.
-5. The page automatically refreshes the linked user, token expiry, and managed pages list.
-6. Use **Pages → Quick Post** to publish to a page you manage. Optional `link` and `image_url` fields are validated before issuing
+5. The page automatically refreshes the linked user, token expiry, and managed resources list.
+6. Explore **Profile → Timeline** to page through recent personal posts. The Newer/Older controls use Graph cursors to request
+   additional results.
+7. Use **Profile → Share to profile** to publish to your personal timeline with optional `link` and `image_url` fields. Successful
+   posts refresh the timeline automatically.
+8. Use **Pages → Quick Post** to publish to a page you manage. Optional `link` and `image_url` fields are validated before issuing
    Graph API requests. The result includes the Facebook post ID and permalink when available.
-7. Update **Settings** (allowed origins, rate limit, verbose logging flag). Changes are persisted to KV and applied immediately.
-8. The **Console** tab streams structured logs over SSE with filters for level and tool. A reconnect button restarts the stream if
-   network issues occur.
+9. Update **Settings** (allowed origins, rate limit, verbose logging flag). Changes are persisted to KV and applied immediately.
+10. The **Console** tab streams structured logs over SSE with filters for level and tool. A reconnect button restarts the stream if
+    network issues occur.
 
 ## MCP integration
 
@@ -117,7 +121,7 @@ In ChatGPT:
 2. Set the base URL to your worker, e.g., `https://<your-worker>.workers.dev`.
 3. ChatGPT connects to `GET /mcp/sse` for readiness and uses `POST /mcp` for tool invocations. Ensure the origin is included in
    `ALLOWED_ORIGINS` so requests are accepted.
-4. The tools appear as `fb.me`, `fb.page_list`, `fb.page_post`, `fb.debug_token`, and `echo`.
+4. The tools appear as `fb.me`, `fb.profile_timeline`, `fb.profile_post`, `fb.page_list`, `fb.page_post`, `fb.debug_token`, and `echo`.
 
 ## Security notes
 
@@ -139,15 +143,19 @@ In ChatGPT:
 
 ## Facebook scopes & limitations
 
-The worker targets Facebook Pages only. Personal profile posting is intentionally not implemented. Minimum recommended scopes:
+The worker now supports both personal profiles and managed Pages. Minimum recommended scopes:
 
 - `public_profile`
 - `pages_show_list`
 - `pages_read_engagement`
 - `pages_manage_posts`
+- `user_posts`
+- `user_photos`
+- `publish_actions`
 
-Posting with images relies on `/{page_id}/photos` followed by `/{page_id}/feed` with `attached_media`. Some combinations may still
-require additional permissions depending on Facebook’s policies; consult the [Graph API documentation](https://developers.facebook.com/docs/graph-api/).
+Posting with images relies on `/{page_id}/photos` or `/me/photos` followed by the corresponding `/feed` call with
+`attached_media`. Some combinations may still require additional permissions depending on Facebook’s policies; consult the
+[Graph API documentation](https://developers.facebook.com/docs/graph-api/).
 
 ## Development scripts
 
